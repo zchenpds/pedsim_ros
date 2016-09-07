@@ -27,7 +27,7 @@ model of [Helbing et. al](http://arxiv.org/pdf/cond-mat/9805244.pdf). The implem
 
 ```
 cd [workspace]/src
-git clone https://github.com/srl-freiburg/pedsim_ros.git
+git clone https://github.com/zchenpds/pedsim_ros.git
 # remaining clones are optional
 git clone https://github.com/srl-freiburg/rviz.git
 cd ..
