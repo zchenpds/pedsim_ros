@@ -31,6 +31,8 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <cmath>
+
 /// --------------------------------------
 /// \enum RobotMode
 /// \brief Robot control mode
@@ -69,6 +71,27 @@ struct Location {
         else
             return false;
     }
+};
+
+class MyWall
+{
+    float x1, y1, x2, y2;
+    float dx, dy;
+    int pillarNum;
+public:
+    std::vector<Location> pillars;
+public:
+    MyWall(float x1, float y1, float x2, float y2):x1(x1), y1(y1), x2(x2), y2(y2)
+    {
+        pillarNum = 1 + sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) / 0.2;
+        dx = (x2 - x1) / pillarNum;
+        dy = (y2 - y1) / pillarNum;
+        for (int i=0; i<pillarNum; i++)
+        {
+            pillars.push_back(Location(x1 + dx * (0.5 + i), y1 + dy * (0.5 + i)));
+        }
+    }
+
 };
 
 #endif

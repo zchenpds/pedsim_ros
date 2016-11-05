@@ -63,6 +63,7 @@ Scene::Scene(QObject* parent)
     tree = new Ped::Ttree(this, 0, area.x(), area.y(), area.width(), area.height());
 
     obstacle_cells_.clear();
+    my_walls_.clear();
 }
 
 Scene::~Scene()
@@ -595,6 +596,7 @@ void Scene::cleanupScene()
 
 void Scene::drawObstacles(float x1, float y1, float x2, float y2)
 {
+    my_walls_.push_back(MyWall(x1, y1, x2, y2));
     int i; // loop counter
     int ystep, xstep; // the step on y and x axis
     int error; // the error accumulated during the increment

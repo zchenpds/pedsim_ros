@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -31,11 +33,29 @@ Ped::Tagent::Tagent()
     scene = nullptr;
     teleop = false;
 
+    std::fstream fpedvel("/home/zchenpds/catkin_ws/src/pedsim_ros/"
+                         "pedsim_simulator/config/pedvel", std::fstream::in);
+    double mean, var;
+    bool is_read = false;
+    if (fpedvel.is_open())
+    {
+        fpedvel >> mean >> var;
+        if (mean > 0 && mean < 5 && var > 0 && var < mean/10)
+            is_read = true;
+    }
+    if (!is_read)
+    {
+        std::cout << "Using default pedvel distribution.";
+        mean = 1.2;
+        var = 0.08;
+    }
+    fpedvel.close();
+
     // assign random maximal speed in m/s
-    normal_distribution<double> distribution(1.34, 0.26);
+    normal_distribution<double> distribution(mean, var);
     vmax = distribution(generator);
 
-    forceFactorDesired = 1.0;
+    forceFactorDesired = 2.0;
     forceFactorSocial = 2.1;
     forceFactorObstacle = 10.0;
     forceSigmaObstacle = 0.8;
@@ -129,6 +149,8 @@ Ped::Tvector Ped::Tagent::desiredForce()
 /// \return  Tvector: the calculated force
 Ped::Tvector Ped::Tagent::socialForce() const
 {
+#define USE_CUSTOM_HRI 1
+
     // define relative importance of position vs velocity vector
     // (set according to Moussaid-Helbing 2009)
     const double lambdaImportance = 2.0;
@@ -145,6 +167,11 @@ Ped::Tvector Ped::Tagent::socialForce() const
     // (set according to Moussaid-Helbing 2009)
     const double n_prime = 3;
 
+
+    // HRI parameters
+    const double A = 23;
+    const double B = 0.1;
+    const double r = 0.3;
     Tvector force;
     for (const Ped::Tagent* other : neighbors) {
         // don't compute social force to yourself
@@ -153,37 +180,86 @@ Ped::Tvector Ped::Tagent::socialForce() const
 
         // compute difference between both agents' positions
         Tvector diff = other->p - p;
-        // NOTE - disabled robot check!
-        // if(other->getType() == ROBOT) diff /= 5;
-
         Tvector diffDirection = diff.normalized();
 
         // compute difference between both agents' velocity vectors
         // Note: the agent-other-order changed here
         Tvector velDiff = v - other->v;
 
-        // compute interaction direction t_ij
-        Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
-        double interactionLength = interactionVector.length();
-        Tvector interactionDirection = interactionVector / interactionLength;
+#if USE_CUSTOM_HRI==1
+        if (other->getType() == ROBOT)
+        {
+            Tvector forceHRI = - A * exp((r - diff.length())/B) * diffDirection;
+            force += forceHRI;
+/*
+            // compute interaction direction t_ij
+            Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
+            double interactionLength = interactionVector.length();
+            Tvector interactionDirection = interactionVector / interactionLength;
 
-        // compute angle theta (between interaction and position difference vector)
-        Ped::Tangle theta = interactionDirection.angleTo(diffDirection);
+            // compute angle theta (between interaction and position difference vector)
+            Ped::Tangle theta = interactionDirection.angleTo(diffDirection);
 
-        // compute model parameter B = gamma * ||D||
-        double B = gamma * interactionLength;
+            // compute model parameter B = gamma * ||D||
+            double B = gamma * interactionLength;
 
-        double thetaRad = theta.toRadian();
-        double forceVelocityAmount = -exp(-diff.length() / B - (n_prime * B * thetaRad) * (n_prime * B * thetaRad));
-        double forceAngleAmount = -theta.sign() * exp(-diff.length() / B - (n * B * thetaRad) * (n * B * thetaRad));
+            double thetaRad = theta.toRadian();
+            double forceVelocityAmount = -exp(-diff.length() / B - (n_prime * B * thetaRad) * (n_prime * B * thetaRad));
+            double forceAngleAmount = -theta.sign() * exp(-diff.length() / B - (n * B * thetaRad) * (n * B * thetaRad));
 
-        Tvector forceVelocity = forceVelocityAmount * interactionDirection;
-        Tvector forceAngle = forceAngleAmount * interactionDirection.leftNormalVector();
+            Tvector forceVelocity = 1.5 * forceVelocityAmount * interactionDirection;
+            Tvector forceAngle = forceAngleAmount * interactionDirection.leftNormalVector();
 
-        force += forceVelocity + forceAngle;
+            force += forceVelocity + forceAngle; */
+        }
+        else
+        {
+            // compute interaction direction t_ij
+            Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
+            double interactionLength = interactionVector.length();
+            Tvector interactionDirection = interactionVector / interactionLength;
+
+            // compute angle theta (between interaction and position difference vector)
+            Ped::Tangle theta = interactionDirection.angleTo(diffDirection);
+
+            // compute model parameter B = gamma * ||D||
+            double B = gamma * interactionLength;
+
+            double thetaRad = theta.toRadian();
+            double forceVelocityAmount = -exp(-diff.length() / B - (n_prime * B * thetaRad) * (n_prime * B * thetaRad));
+            double forceAngleAmount = -theta.sign() * exp(-diff.length() / B - (n * B * thetaRad) * (n * B * thetaRad));
+
+            Tvector forceVelocity = forceVelocityAmount * interactionDirection;
+            Tvector forceAngle = forceAngleAmount * interactionDirection.leftNormalVector();
+
+            force += forceVelocity + forceAngle;
+        }
+#else
+    // compute interaction direction t_ij
+    Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
+    double interactionLength = interactionVector.length();
+    Tvector interactionDirection = interactionVector / interactionLength;
+
+    // compute angle theta (between interaction and position difference vector)
+    Ped::Tangle theta = interactionDirection.angleTo(diffDirection);
+
+    // compute model parameter B = gamma * ||D||
+    double B = gamma * interactionLength;
+
+    double thetaRad = theta.toRadian();
+    double forceVelocityAmount = -exp(-diff.length() / B - (n_prime * B * thetaRad) * (n_prime * B * thetaRad));
+    double forceAngleAmount = -theta.sign() * exp(-diff.length() / B - (n * B * thetaRad) * (n * B * thetaRad));
+
+    Tvector forceVelocity = forceVelocityAmount * interactionDirection;
+    Tvector forceAngle = forceAngleAmount * interactionDirection.leftNormalVector();
+
+    force += forceVelocity + forceAngle;
+#endif
+
     }
-
     return force;
+
+
 }
 
 /// Calculates the force between this agent and the nearest obstacle in this

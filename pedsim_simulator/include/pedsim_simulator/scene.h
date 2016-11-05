@@ -139,7 +139,7 @@ public:
 
     // obstacle cell locations
     std::vector<Location> obstacle_cells_;
-
+    std::vector<MyWall> my_walls_;
     // Attributes
 protected:
     QList<Agent*> agents;

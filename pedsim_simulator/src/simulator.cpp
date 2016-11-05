@@ -538,6 +538,7 @@ void Simulator::publishAgents()
 {
     animated_marker_msgs::AnimatedMarkerArray marker_array;
     visualization_msgs::MarkerArray arrow_array;
+    //static int round;
 
     // status message
     pedsim_msgs::AllAgentsState all_status;
@@ -545,6 +546,7 @@ void Simulator::publishAgents()
     all_header.stamp = ros::Time::now();
     all_status.header = all_header;
 
+    //int i = 0;
     for (Agent* a : SCENE.getAgents()) {
         /// walking people message
         animated_marker_msgs::AnimatedMarker marker;
@@ -557,6 +559,7 @@ void Simulator::publishAgents()
 
         marker.pose.position.x = a->getx();
         marker.pose.position.y = a->gety();
+
         marker.action = 0; // add or modify
         marker.scale.x = PERSON_MESH_SCALE;
         marker.scale.y = PERSON_MESH_SCALE;
@@ -743,7 +746,6 @@ void Simulator::publishObstacles()
         p.z = 0.0;
         grid_cells.cells.push_back(p);
     }
-
     pub_obstacles_.publish(grid_cells);
 }
 
@@ -754,6 +756,7 @@ void Simulator::publishObstacles()
 /// -----------------------------------------------------------------
 void Simulator::publishWalls()
 {
+    /*
     visualization_msgs::Marker marker;
     marker.header.frame_id = "odom";
     marker.header.stamp = ros::Time();
@@ -762,8 +765,8 @@ void Simulator::publishWalls()
     marker.color.r = 1.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
-    marker.scale.x = 1.0;
-    marker.scale.y = 1.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
     marker.scale.z = 2.0;
     marker.pose.position.z = marker.scale.z / 2.0;
     marker.type = visualization_msgs::Marker::CUBE_LIST;
@@ -775,6 +778,34 @@ void Simulator::publishWalls()
         p.z = 0.0;
         marker.points.push_back(p);
     }
+    */
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "odom";
+    marker.header.stamp = ros::Time();
+    marker.id = 10000;
+    marker.color.a = 1.0;
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
+    marker.color.b = 0.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 0.1;
+    marker.scale.z = 2.0;
+    marker.pose.position.z = marker.scale.z / 2.0;
+    marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+    for (const auto& wall : SCENE.my_walls_)
+    {
+        for (const auto& pillar : wall.pillars)
+        {
+            geometry_msgs::Point p;
+            p.x = pillar.x;
+            p.y = pillar.y;
+            p.z = 0.0;
+            marker.points.push_back(p);
+        }
+    }
+
 
     pub_walls_.publish(marker);
 }
