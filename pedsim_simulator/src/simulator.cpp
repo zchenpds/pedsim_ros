@@ -784,7 +784,7 @@ void Simulator::publishWalls()
     marker.header.frame_id = "odom";
     marker.header.stamp = ros::Time();
     marker.id = 10000;
-    marker.color.a = 1.0;
+    marker.color.a = 0.4;
     marker.color.r = 1.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;

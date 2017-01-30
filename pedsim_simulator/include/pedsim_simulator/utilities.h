@@ -83,7 +83,8 @@ public:
 public:
     MyWall(float x1, float y1, float x2, float y2):x1(x1), y1(y1), x2(x2), y2(y2)
     {
-        pillarNum = 1 + sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) / 0.2;
+        // pillarNum = 1 + sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) / 0.2;
+        pillarNum = 1 + sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)) / 0.1;
         dx = (x2 - x1) / pillarNum;
         dy = (y2 - y1) / pillarNum;
         for (int i=0; i<pillarNum; i++)

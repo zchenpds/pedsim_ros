@@ -18,6 +18,11 @@ using namespace std;
 
 default_random_engine generator;
 
+// HRI parameters
+double A = 23;
+double B = 0.1;
+double r = 0.6;
+
 /// Default Constructor
 Ped::Tagent::Tagent()
 {
@@ -39,7 +44,7 @@ Ped::Tagent::Tagent()
     bool is_read = false;
     if (fpedvel.is_open())
     {
-        fpedvel >> mean >> var;
+        fpedvel >> mean >> var >> forceFactorDesired >> forceFactorSocial >> A >> B >> r;
         if (mean > 0 && mean < 5 && var > 0 && var < mean/10)
             is_read = true;
     }
@@ -48,15 +53,20 @@ Ped::Tagent::Tagent()
         std::cout << "Using default pedvel distribution.";
         mean = 1.2;
         var = 0.08;
+        forceFactorDesired = 5.0;
+        forceFactorSocial = 2.1;
     }
     fpedvel.close();
 
     // assign random maximal speed in m/s
     normal_distribution<double> distribution(mean, var);
     vmax = distribution(generator);
-
-    forceFactorDesired = 2.0;
+#if 0
+    forceFactorDesired = 5.0;
     forceFactorSocial = 2.1;
+#endif
+    // cout << " forceFactorDesired = " << forceFactorDesired;
+    // cout << " forceFactorSocial = " << forceFactorSocial << endl;
     forceFactorObstacle = 10.0;
     forceSigmaObstacle = 0.8;
 
@@ -167,11 +177,16 @@ Ped::Tvector Ped::Tagent::socialForce() const
     // (set according to Moussaid-Helbing 2009)
     const double n_prime = 3;
 
-
+#if 0
     // HRI parameters
     const double A = 23;
     const double B = 0.1;
-    const double r = 0.3;
+    const double r = 0.6;
+#endif
+    //cout << " A = " << A;
+    //cout << " B = " << B;
+    //cout << " r = " << r << endl;
+
     Tvector force;
     for (const Ped::Tagent* other : neighbors) {
         // don't compute social force to yourself
@@ -191,26 +206,7 @@ Ped::Tvector Ped::Tagent::socialForce() const
         {
             Tvector forceHRI = - A * exp((r - diff.length())/B) * diffDirection;
             force += forceHRI;
-/*
-            // compute interaction direction t_ij
-            Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
-            double interactionLength = interactionVector.length();
-            Tvector interactionDirection = interactionVector / interactionLength;
 
-            // compute angle theta (between interaction and position difference vector)
-            Ped::Tangle theta = interactionDirection.angleTo(diffDirection);
-
-            // compute model parameter B = gamma * ||D||
-            double B = gamma * interactionLength;
-
-            double thetaRad = theta.toRadian();
-            double forceVelocityAmount = -exp(-diff.length() / B - (n_prime * B * thetaRad) * (n_prime * B * thetaRad));
-            double forceAngleAmount = -theta.sign() * exp(-diff.length() / B - (n * B * thetaRad) * (n * B * thetaRad));
-
-            Tvector forceVelocity = 1.5 * forceVelocityAmount * interactionDirection;
-            Tvector forceAngle = forceAngleAmount * interactionDirection.leftNormalVector();
-
-            force += forceVelocity + forceAngle; */
         }
         else
         {
