@@ -39,8 +39,8 @@ Config::Config(QObject* parent)
     updateRate = 25.0;
     simulationFactor = 1.0;
 
-    forceObstacle = 10.0;
-    sigmaObstacle = 0.2;
+    forceObstacle = 0.5755; // 10.0; // Aw
+    sigmaObstacle = 8.9152; // 0.2; // Bw
     forceSocial = 5.1;
 
     forceGroupGaze = 3.0;
