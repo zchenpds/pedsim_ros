@@ -55,7 +55,7 @@ Ped::Tagent::Tagent()
     forceSigmaObstacle = 8.9152; // 0.2; // Bw
 
     agentRadius = 0.3;
-    relaxationTime = 0.4009;
+    relaxationTime = 0.5009;
 }
 
 /// Destructor
@@ -199,8 +199,8 @@ Ped::Tvector Ped::Tagent::socialForce() const
          double const_ij = const_D1/diff.length(); 
          double var_ij = pow(const_ij, 2);
          double lambda = 0.3387; // Chao: 0.25
-         double A = 0.4072; // Aij
-         double B = 0.1959; // Bij
+         double A = 250; //0.4072; // Aij
+         double B = 0.08; //0.1959; // Bij
          double Theta_ij = lambda + (1-lambda)*0.5*(1 + Tvector::dotProduct(v.normalized(), diff.normalized()));
          // 
          double gab_ij;
@@ -218,6 +218,8 @@ Ped::Tvector Ped::Tagent::socialForce() const
 
          //Tvector forcePeds = -exp(-diff.length() / const_D0 + var_ij) * diffDirection * Theta_ij + 0 * gab_ij * Tvector::dotProduct(-velDiff, tab_ij) * tab_ij;
          Tvector forcePeds = -A * exp( (2*agentRadius - diff.length()) / B ) * diffDirection * Theta_ij;
+         if (2*agentRadius > diff.length())
+             forcePeds += -1.5e4 * (2*agentRadius > diff.length()) * diffDirection;
          force += forcePeds; 
         }
 #else
