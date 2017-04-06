@@ -9,10 +9,10 @@
     <obstacle x1="0" y1="0" x2="10" y2="0"/>
 
     <!--Waypoints (incl. WaitingQueues)-->
-    <waypoint id="a" x="-1.5" y="2" r="2"/>
-    <waypoint id="b" x="11.5" y="2" r="2"/>
-    <waypoint id="c" x="11.5" y="-2" r="2"/>
-    <waypoint id="d" x="-1.5" y="-2" r="2"/>
+    <waypoint id="a" x="-2" y="2" r="1.8"/>
+    <waypoint id="b" x="12" y="2" r="1.8"/>
+    <waypoint id="c" x="12" y="-2" r="1.8"/>
+    <waypoint id="d" x="-2" y="-2" r="1.8"/>
     <waypoint id="robot_goal" x="22" y="27" r="2"/>
     <waypoint id="robot_start" x="4" y="4" r="2"/>
 
@@ -26,10 +26,10 @@
         <addwaypoint id="robot_goal"/>
     </agent>
     <!--AgentClusters-->
-    <agent x="-1.5" y="2" n="11" dx="2.5" dy="2" type="1">
-        <addwaypoint id="a"/>
+    <agent x="-0.5" y="2" n="11" dx="3" dy="2" type="1">
         <addwaypoint id="b"/>
         <addwaypoint id="c"/>
         <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
     </agent>
 </scenario>
