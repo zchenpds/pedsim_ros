@@ -39,7 +39,7 @@ Ped::Tagent::Tagent()
     teleop = false;
     double mean, var;
         std::cout << "Using default pedvel distribution.";
-        mean = 1.5;
+        mean = 1.25;
         var = 0.1;
         forceFactorDesired = 1.0;
         forceFactorSocial = 1.0;
