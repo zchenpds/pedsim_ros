@@ -199,7 +199,7 @@ Ped::Tvector Ped::Tagent::socialForce() const
          double const_ij = const_D1/diff.length(); 
          double var_ij = pow(const_ij, 2);
          double lambda = 0.3387; // Chao: 0.25
-         double A = 250; //0.4072; // Aij
+         double A = 25; //0.4072; // Aij
          double B = 0.08; //0.1959; // Bij
          double Theta_ij = lambda + (1-lambda)*0.5*(1 + Tvector::dotProduct(v.normalized(), diff.normalized()));
          // 
