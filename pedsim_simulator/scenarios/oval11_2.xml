@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This scenario file was created by SGDiCoP on 2014-04-16T15:14:48-->
+<scenario>
+    <!--Obstacles-->
+    <obstacle x1="-3" y1="-4" x2="13" y2="-4"/>
+    <obstacle x1="-3" y1="-4" x2="-3" y2="4"/>
+    <obstacle x1="-3" y1="4" x2="13" y2="4"/>
+    <obstacle x1="13" y1="4" x2="13" y2="-4"/>
+    <obstacle x1="0" y1="0" x2="10" y2="0"/>
+
+    <!--Waypoints (incl. WaitingQueues)-->
+    <waypoint id="a" x="-2" y="2" r="1.8"/>
+    <waypoint id="b" x="12" y="2" r="1.8"/>
+    <waypoint id="c" x="12" y="-2" r="1.8"/>
+    <waypoint id="d" x="-2" y="-2" r="1.8"/>
+    <waypoint id="robot_goal" x="22" y="27" r="2"/>
+    <waypoint id="robot_start" x="4" y="4" r="2"/>
+
+
+    <!--Attractions-->
+<!--     <attraction id="Bookshop" x="27" y="15" width="5" height="10" strength="1"/> -->
+<!--     <attraction id="starbucksky" x="3" y="15" width="5" height="10" strength="2"/> -->
+    <!--Agents-->
+    <agent x="2" y="2" n="1" dx="0" dy="0" type="2">
+        <addwaypoint id="robot_start"/>
+        <addwaypoint id="robot_goal"/>
+    </agent>
+    <!--IndividualAgents-->
+    <agent x="1" y="1" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="1" y="2" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="1" y="3" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="0" y="1" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="0" y="2" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="0" y="3" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="-1" y="1" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="-1" y="2" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="-1" y="3" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="-2" y="1.5" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+    <agent x="-2" y="2.5" n="1" dx="0" dy="0" type="1">
+        <addwaypoint id="b"/>
+        <addwaypoint id="c"/>
+        <addwaypoint id="d"/>
+        <addwaypoint id="a"/>
+    </agent>
+
+
+</scenario>

@@ -40,7 +40,7 @@ Ped::Tagent::Tagent()
     double mean, var;
         std::cout << "Using default pedvel distribution.";
         mean = 1.25;
-        var = 0.1;
+        var = 0.0;
         forceFactorDesired = 1.0;
         forceFactorSocial = 1.0;
 
