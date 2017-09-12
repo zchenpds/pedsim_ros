@@ -2,10 +2,7 @@
 <!--This scenario file was created by SGDiCoP on 2014-04-16T15:14:48-->
 <scenario>
     <!--Obstacles-->
-    <obstacle x1="-3" y1="-4" x2="13" y2="-4"/>
-    <obstacle x1="-3" y1="-4" x2="-3" y2="4"/>
-    <obstacle x1="-3" y1="4" x2="13" y2="4"/>
-    <obstacle x1="13" y1="4" x2="13" y2="-4"/>
+    <obstacle x1="0" y1="4" x2="10" y2="4"/>
     <obstacle x1="0" y1="0" x2="10" y2="0"/>
 
     <!--Waypoints (incl. WaitingQueues)-->

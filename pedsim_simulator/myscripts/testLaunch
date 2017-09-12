@@ -4,4 +4,4 @@
 # echo "1.25 0.00 1.0 1.0 5 0.5 0.2" > ../config/pedvel 
 roslaunch pedsim_simulator my_rviz.launch &
 sleep 5
-roslaunch pedsim_simulator my.launch omega:=0.1 init_phase:=3.14 robot_init_y:=8.5 ped_num:=11 record:="false" rviz:="false"
+roslaunch pedsim_simulator my.launch omega:=0.4 init_phase:=3.14 robot_init_y:=3.5 ped_num:=11 record:="false" rviz:="false"

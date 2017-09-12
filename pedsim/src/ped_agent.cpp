@@ -23,6 +23,13 @@ double A_ir = 4;
 double B_ir = 1;
 double r_r = 0.5;
 
+// anticipatory force parameters
+static const float _k = 1.5*3;
+static const float _m = 2.0;
+static const float _t0 = 3.0;
+static const float MAX_FORCE = 20;
+static const float EPSILON = 0.0001;
+
 /// Default Constructor
 Ped::Tagent::Tagent()
 {
@@ -143,7 +150,7 @@ Ped::Tvector Ped::Tagent::desiredForce()
 /// \return  Tvector: the calculated force
 Ped::Tvector Ped::Tagent::socialForce() const
 {
-#define USE_CUSTOM_HRI 1
+#define USE_CUSTOM_HRI 2
 
     // define relative importance of position vs velocity vector
     // (set according to Moussaid-Helbing 2009)
@@ -222,6 +229,76 @@ Ped::Tvector Ped::Tagent::socialForce() const
              forcePeds += -1.5e4 * (2*agentRadius > diff.length()) * diffDirection;
          force += forcePeds; 
         }
+#elif USE_CUSTOM_HRI==2
+
+
+	if (other->getType() == ROBOT)
+        {
+	    ////////////////////////////////////////////////////////////////////////////////////////
+	
+	    const float distanceSq = (other->p - p).lengthSquared();
+	    float radiusSq = (r_r + agentRadius) * (r_r + agentRadius);
+	    if (distanceSq != radiusSq)
+	    {	
+		// if agents are actually colliding use their separation distance 
+		if (distanceSq < radiusSq)
+		    radiusSq  = 0.99 * distanceSq;
+					
+		const Tvector w_ = other->p - p;
+		const Tvector v_ = v - other->v;
+		const float a = Tvector::dotProduct(v_, v_);
+		const float b = Tvector::dotProduct(w_, v_);	
+		const float c = Tvector::dotProduct(w_, w_) - radiusSq;
+		float discr = b*b - a*c;
+		if (discr > .0f && (a<-EPSILON || a>EPSILON))
+		{
+		    discr = sqrt(discr);
+		    const float t = (b - discr) / a;
+		    if (t>0){
+			Tvector forceHRI = -_k*exp(-t/_t0)*(v_ - (b*v_ - a*w_)/discr)/(a*pow(t,_m))*(_m/t + 1/_t0);
+			if (forceHRI.length() > MAX_FORCE)
+			    forceHRI = forceHRI / forceHRI.length() * MAX_FORCE;
+			force += forceHRI;
+		    }
+		}
+	    }
+
+
+	    ////////////////////////////////////////////////////////////////////////////////////////
+            //Tvector forceHRI = -A_ir * exp(((r_r + agentRadius) - diff.length())/B_ir) * diffDirection;
+            //force += forceHRI;
+
+        }
+        else
+        {
+         double const_D0 = 0.31;
+         double const_D1 = 0.45;
+         double const_ij = const_D1/diff.length(); 
+         double var_ij = pow(const_ij, 2);
+         double lambda = 0.3387; // Chao: 0.25
+         double A = 25; //0.4072; // Aij
+         double B = 0.08; //0.1959; // Bij
+         double Theta_ij = lambda + (1-lambda)*0.5*(1 + Tvector::dotProduct(v.normalized(), diff.normalized()));
+         // 
+         double gab_ij;
+         Tvector tab_ij;
+         tab_ij.x = diffDirection.y;
+         tab_ij.y = - diffDirection.x;         
+         if (diff.length() > 2*agentRadius)
+         {
+             gab_ij = 0;
+         }
+         else
+         {
+             gab_ij = 2*agentRadius - diff.length();   
+         }   
+
+         //Tvector forcePeds = -exp(-diff.length() / const_D0 + var_ij) * diffDirection * Theta_ij + 0 * gab_ij * Tvector::dotProduct(-velDiff, tab_ij) * tab_ij;
+         Tvector forcePeds = -A * exp( (2*agentRadius - diff.length()) / B ) * diffDirection * Theta_ij;
+         if (2*agentRadius > diff.length())
+             forcePeds += -1.5e4 * (2*agentRadius > diff.length()) * diffDirection;
+         force += forcePeds; 
+        }
 #else
     // compute interaction direction t_ij
     Tvector interactionVector = lambdaImportance * velDiff + diffDirection;
@@ -250,6 +327,171 @@ Ped::Tvector Ped::Tagent::socialForce() const
 
 }
 
+
+#if USE_CUSTOM_HRI==2
+/// Calculates the force between this agent and the nearest obstacle in this
+/// scene.
+/// Iterates over all obstacles == O(N).
+/// \return  Tvector: the calculated force
+Ped::Tvector Ped::Tagent::obstacleForce() const
+{
+
+    //////////////////////////////////////////////////////////
+    // obstacle which is closest only
+//    Ped::Tvector minDiff;
+    float effectiveObstacleDistance = 2;
+    const float _INFTY = 1e10;
+    Ped::Tvector forceObstacle;
+    for (const Tobstacle* obstacle : scene->obstacles) 
+    {
+        //const LineObstacle* obstacle = simEngine->getObstacle(i);
+        Ped::Tvector closestPoint = obstacle->closestPoint(p);
+        Ped::Tvector n_w = closestPoint - p;
+	float d_w = n_w.lengthSquared();
+	
+
+	// Agent is moving away from obstacle, already colliding or obstacle too far away
+	if (Ped::Tvector::dotProduct(v, n_w) < 0 || d_w == agentRadius * agentRadius || d_w > effectiveObstacleDistance *effectiveObstacleDistance)
+	    continue;
+        // correct the radius, if the agent is already colliding	
+	const float radius = d_w < (agentRadius*agentRadius)? sqrt(d_w):agentRadius; 
+
+	const float a= Ped::Tvector::dotProduct(v, v);
+	bool discCollision = false, segmentCollision = false;
+	float t_min = _INFTY;
+	        
+	float c, b, discr; 
+	float b_temp, discr_temp, c_temp, D_temp;
+	Ped::Tvector w_temp, w, o1_temp, o2_temp, o_temp, o, w_o;
+
+	// time-to-collision with disc_1 of the capped rectangle (capsule)
+	w_temp = obstacle->getStartPoint() - p;
+	b_temp = Ped::Tvector::dotProduct(w_temp, v);	
+	c_temp = Ped::Tvector::dotProduct(w_temp, w_temp) - (radius*radius);
+	discr_temp = b_temp*b_temp - a*c_temp;
+	if (discr_temp > .0f && (a<-EPSILON || a>EPSILON))
+	{
+	    discr_temp = sqrt(discr_temp);
+	    const float t = (b_temp - discr_temp) / a;
+	    if (t>0){
+		t_min = t;
+		b = b_temp;
+		discr = discr_temp;
+		w = w_temp;
+		c = c_temp;
+		discCollision = true;
+	    }
+	}
+					
+	// time-to-collision with disc_2 of the capsule
+	w_temp = obstacle->getEndPoint() - p;
+	b_temp = Ped::Tvector::dotProduct(w_temp, v);	
+	c_temp = Ped::Tvector::dotProduct(w_temp, w_temp) - (radius*radius);
+	discr_temp = b_temp*b_temp - a*c_temp;
+	if (discr_temp > .0f && (a<-EPSILON || a>EPSILON))
+	{
+	    discr_temp = sqrt(discr_temp);
+	    const float t = (b_temp - discr_temp) / a;
+	    if (t>0 && t < t_min){
+		t_min = t;
+		b = b_temp;
+		discr = discr_temp;
+		w = w_temp;
+		c = c_temp;
+		discCollision = true;
+	    }
+	}
+
+	// time-to-collision with segment_1 of the capsule
+	Ped::Tvector p1 = obstacle->getStartPoint();
+	Ped::Tvector p2 = obstacle->getEndPoint();
+	
+	o1_temp = p1 + radius * (p2 - p1).leftNormalVector();
+	o2_temp = p2 + radius * (p2 - p1).leftNormalVector();
+	o_temp = o2_temp - o1_temp;
+
+	D_temp = Ped::Tvector::crossProduct(v, o_temp).z;
+	if (D_temp != 0)   
+	{
+	    float inverseDet = 1.0f/D_temp;	
+	    float t = Ped::Tvector::crossProduct(o_temp, p - o1_temp).z * inverseDet;
+	    float s = Ped::Tvector::crossProduct(v, p - o1_temp).z * inverseDet;
+	    if (t>0 && s>=0 && s <=1 && t<t_min)
+	    {
+		t_min = t;
+		o = o_temp;
+		w_o = p - o1_temp;
+		discCollision = false;
+		segmentCollision = true;
+	    }
+	}
+
+	// time-to-collision with segment_2 of the capsule
+	o1_temp = p1 + radius * (p2 - p1).rightNormalVector();
+	o2_temp = p2 + radius * (p2 - p1).rightNormalVector();
+	o_temp = o2_temp - o1_temp;
+
+	D_temp = Ped::Tvector::crossProduct(v, o_temp).z;
+	if (D_temp != 0)   
+	{
+	    float inverseDet = 1.0f/D_temp;	
+	    float t = Ped::Tvector::crossProduct(o_temp, p - o1_temp).z * inverseDet;
+	    float s = Ped::Tvector::crossProduct(v, p - o1_temp).z * inverseDet;
+	    if (t>0 && s>=0 && s <=1 && t<t_min)
+	    {
+		t_min = t;
+		o = o_temp;
+		w_o = p - o1_temp;
+		discCollision = false;
+		segmentCollision = true;
+	    }
+	}
+
+	if (discCollision)
+	{
+	    forceObstacle += -_k*exp(-t_min/_t0)*(v - (b*v - a*w)/discr)/(a*pow(t_min,_m))*(_m/t_min + 1/_t0);		
+	}
+	else if (segmentCollision)
+	{
+	    forceObstacle += _k*exp(-t_min/_t0)/(pow(t_min,_m)*Ped::Tvector::crossProduct(v,o)).z*(_m/t_min + 1/_t0)*Ped::Tvector(-o.y, o.x);
+	}
+        
+    }
+    if (forceObstacle.length() > MAX_FORCE)
+	forceObstacle = forceObstacle / forceObstacle.length() * MAX_FORCE;
+
+    // physical obstacle force
+    // obstacle which is closest only
+    Ped::Tvector minDiff;
+    double minDistanceSquared = INFINITY;
+
+    for (const Tobstacle* obstacle : scene->obstacles) {
+        Ped::Tvector closestPoint = obstacle->closestPoint(p);
+        Ped::Tvector diff = p - closestPoint;
+        double distanceSquared = diff.lengthSquared(); // use squared distance to
+        // avoid computing square
+        // root
+        if (distanceSquared < minDistanceSquared) {
+            minDistanceSquared = distanceSquared;
+            minDiff = diff;
+        }
+    }
+
+    double distance = sqrt(minDistanceSquared) - agentRadius;
+    double forceAmount = exp(-distance / forceSigmaObstacle);
+    if (agentRadius > sqrt(minDistanceSquared))
+             forceAmount += 1.5e2 * (agentRadius - sqrt(minDistanceSquared));
+    forceObstacle += forceAmount * minDiff.normalized();
+
+    if (forceObstacle.length() > MAX_FORCE)
+	forceObstacle = forceObstacle / forceObstacle.length() * MAX_FORCE;
+    return forceObstacle;
+    //////////////////////////////////////////////////////////
+}
+
+
+
+#else
 /// Calculates the force between this agent and the nearest obstacle in this
 /// scene.
 /// Iterates over all obstacles == O(N).
@@ -278,6 +520,8 @@ Ped::Tvector Ped::Tagent::obstacleForce() const
              forceAmount += 1.5e2 * (agentRadius - sqrt(minDistanceSquared));
     return forceAmount * minDiff.normalized();
 }
+#endif
+
 
 /// myForce() is a method that returns an "empty" force (all components set to
 /// 0).
